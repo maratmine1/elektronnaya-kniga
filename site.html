@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>80 лет — Траектория поколений</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: #050505;
+      color: white;
+      font-family: Arial, Helvetica, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* =========================
+       ОБЛОЖКА
+    ========================== */
+
+    .cover {
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      background:
+        radial-gradient(
+          circle at 50% 45%,
+          rgba(255,255,255,0.05),
+          transparent 30%
+        ),
+        #050505;
+    }
+
+    /* Логотип / название */
+
+    .logo {
+      position: absolute;
+      top: 45px;
+      left: 55px;
+
+      display: flex;
+      align-items: center;
+      gap: 18px;
+
+      z-index: 10;
+    }
+
+    .logo-circle {
+      width: 55px;
+      height: 55px;
+
+      border: 13px solid white;
+      border-right-color: #555;
+
+      border-radius: 50%;
+      transform: rotate(30deg);
+    }
+
+    .logo-text {
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 5px;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    /* =========================
+       ТОЧЕЧНАЯ ЛЕНТА
+    ========================== */
+
+    .ribbon {
+      position: absolute;
+
+      width: 1150px;
+      height: 430px;
+
+      border-radius: 50%;
+
+      background-image:
+        radial-gradient(
+          circle,
+          rgba(255,255,255,0.95) 0 3px,
+          transparent 4px
+        );
+
+      background-size: 18px 18px;
+
+      mask-image:
+        linear-gradient(
+          90deg,
+          transparent 0%,
+          black 16%,
+          black 80%,
+          transparent 100%
+        );
+
+      opacity: .72;
+
+      transform:
+        rotate(-12deg)
+        skewX(-8deg);
+
+      animation:
+        ribbonMove 12s linear infinite,
+        ribbonBreath 4s ease-in-out infinite;
+
+      filter: drop-shadow(0 0 8px rgba(255,255,255,.2));
+    }
+
+    .ribbon.top {
+      top: 40px;
+      left: 8%;
+    }
+
+    .ribbon.bottom {
+      width: 900px;
+      height: 260px;
+
+      top: 65%;
+      left: 5%;
+
+      transform:
+        rotate(15deg)
+        skewX(-15deg);
+
+      opacity: .5;
+
+      animation-duration: 16s;
+    }
+
+    @keyframes ribbonMove {
+      0% {
+        background-position: 0 0;
+      }
+
+      100% {
+        background-position: 180px 0;
+      }
+    }
+
+    @keyframes ribbonBreath {
+      0%, 100% {
+        opacity: .45;
+        filter: blur(0px);
+      }
+
+      50% {
+        opacity: .9;
+        filter: blur(.2px);
+      }
+    }
+
+    /* =========================
+       ЧИСЛО 80
+    ========================== */
+
+    .center {
+      position: relative;
+      z-index: 5;
+      text-align: center;
+    }
+
+    .anniversary {
+      position: relative;
+
+      font-size: clamp(150px, 25vw, 350px);
+      font-weight: 900;
+
+      line-height: .72;
+
+      letter-spacing: -25px;
+
+      animation: eightyFloat 4s ease-in-out infinite;
+
+      transform-origin: center;
+    }
+
+    /*
+       Второй слой числа:
+       создаёт лёгкую подсветку / призрак
+    */
+
+    .anniversary::before {
+      content: "80";
+
+      position: absolute;
+      inset: 0;
+
+      color: transparent;
+
+      -webkit-text-stroke: 3px rgba(255,255,255,.25);
+
+      filter: blur(4px);
+
+      transform: scale(1.04);
+
+      animation: glow80 2.2s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    /*
+       Световой блик проходит по числу
+    */
+
+    .anniversary span {
+      display: inline-block;
+
+      color: transparent;
+
+      background:
+        linear-gradient(
+          110deg,
+          #fff 25%,
+          #888 42%,
+          #fff 50%,
+          #777 57%,
+          #fff 75%
+        );
+
+      background-size: 250% 100%;
+
+      -webkit-background-clip: text;
+      background-clip: text;
+
+      animation:
+        shine80 4s linear infinite,
+        digitPulse 4s ease-in-out infinite;
+    }
+
+    @keyframes eightyFloat {
+      0%, 100% {
+        transform:
+          translateY(0)
+          scale(1);
+      }
+
+      50% {
+        transform:
+          translateY(-12px)
+          scale(1.025);
+      }
+    }
+
+    @keyframes glow80 {
+      0%, 100% {
+        opacity: .1;
+        transform: scale(1.02);
+      }
+
+      50% {
+        opacity: .65;
+        transform: scale(1.08);
+      }
+    }
+
+    @keyframes shine80 {
+      from {
+        background-position: 200% center;
+      }
+
+      to {
+        background-position: -100% center;
+      }
+    }
+
+    @keyframes digitPulse {
+      0%, 100% {
+        filter:
+          drop-shadow(0 0 0 rgba(255,255,255,0));
+      }
+
+      50% {
+        filter:
+          drop-shadow(0 0 25px rgba(255,255,255,.15));
+      }
+    }
+
+    /* ЛЕТ */
+
+    .years {
+      font-size: clamp(60px, 10vw, 125px);
+
+      font-weight: 900;
+      line-height: .9;
+
+      margin-top: 22px;
+
+      animation: yearsAppear 1.4s ease both;
+    }
+
+    @keyframes yearsAppear {
+      from {
+        opacity: 0;
+        transform: translateY(45px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .subtitle {
+      margin-top: 35px;
+
+      font-size: clamp(18px, 2vw, 30px);
+
+      letter-spacing: 13px;
+      text-transform: uppercase;
+
+      font-weight: 300;
+
+      line-height: 1.5;
+
+      opacity: .95;
+    }
+
+    /* красная точка */
+
+    .red-dot {
+      position: absolute;
+
+      left: 6%;
+      bottom: 50px;
+
+      width: 24px;
+      height: 24px;
+
+      background: #ff003c;
+      border-radius: 50%;
+
+      box-shadow:
+        0 0 0 0 rgba(255,0,60,.8);
+
+      animation: redPulse 1.7s infinite;
+    }
+
+    @keyframes redPulse {
+      0% {
+        box-shadow:
+          0 0 0 0 rgba(255,0,60,.7);
+      }
+
+      70% {
+        box-shadow:
+          0 0 0 25px rgba(255,0,60,0);
+      }
+
+      100% {
+        box-shadow:
+          0 0 0 0 rgba(255,0,60,0);
+      }
+    }
+
+    /* кнопка */
+
+    .open-book {
+      position: absolute;
+
+      bottom: 50px;
+      right: 60px;
+
+      color: white;
+      text-decoration: none;
+
+      font-size: 14px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+
+      border-bottom: 1px solid rgba(255,255,255,.5);
+
+      padding-bottom: 7px;
+
+      transition: .35s;
+    }
+
+    .open-book:hover {
+      letter-spacing: 7px;
+      border-color: white;
+    }
+
+    /* =========================
+       КНИГА
+    ========================== */
+
+    .book {
+      min-height: 100vh;
+
+      padding:
+        110px
+        max(7vw, 30px);
+
+      background:
+        linear-gradient(
+          180deg,
+          #050505,
+          #0b0b0b
+        );
+    }
+
+    .book-heading {
+      display: flex;
+      align-items: end;
+      gap: 30px;
+
+      margin-bottom: 70px;
+    }
+
+    .book-number {
+      font-size: 95px;
+      font-weight: 900;
+      color: #ff003c;
+      line-height: 1;
+    }
+
+    .book h1 {
+      font-size: clamp(40px, 6vw, 88px);
+      line-height: .95;
+      text-transform: uppercase;
+    }
+
+    .chapters {
+      display: grid;
+
+      grid-template-columns:
+        repeat(
+          auto-fit,
+          minmax(260px, 1fr)
+        );
+
+      gap: 20px;
+    }
+
+    .chapter {
+      min-height: 260px;
+
+      padding: 30px;
+
+      border:
+        1px solid rgba(255,255,255,.17);
+
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+
+      background:
+        rgba(255,255,255,.025);
+
+      transition:
+        transform .4s ease,
+        background .4s ease;
+    }
+
+    .chapter:hover {
+      transform: translateY(-10px);
+
+      background:
+        rgba(255,255,255,.07);
+    }
+
+    .chapter small {
+      color: #ff003c;
+      letter-spacing: 3px;
+    }
+
+    .chapter h2 {
+      font-size: 27px;
+      margin-top: 50px;
+    }
+
+    .chapter p {
+      margin-top: 20px;
+
+      color: #aaa;
+      line-height: 1.6;
+    }
+
+    /* =========================
+       АДАПТИВ
+    ========================== */
+
+    @media (max-width: 700px) {
+
+      .logo {
+        left: 24px;
+        top: 25px;
+      }
+
+      .logo-circle {
+        width: 38px;
+        height: 38px;
+        border-width: 9px;
+      }
+
+      .logo-text {
+        font-size: 13px;
+        letter-spacing: 3px;
+      }
+
+      .anniversary {
+        letter-spacing: -12px;
+      }
+
+      .subtitle {
+        letter-spacing: 6px;
+      }
+
+      .open-book {
+        right: 25px;
+        bottom: 30px;
+      }
+
+      .ribbon {
+        width: 800px;
+        opacity: .4;
+      }
+
+    }
+  </style>
+</head>
+
+
+<body>
+
+  <!-- =========================
+       ОБЛОЖКА
+  ========================== -->
+
+  <section class="cover">
+
+    <div class="logo">
+
+      <div class="logo-circle"></div>
+
+      <div class="logo-text">
+        Московский<br>
+        Политех
+      </div>
+
+    </div>
+
+
+    <div class="ribbon top"></div>
+    <div class="ribbon bottom"></div>
+
+
+    <div class="center">
+
+      <div class="anniversary">
+        <span id="number80">80</span>
+      </div>
+
+      <div class="years">
+        ЛЕТ
+      </div>
+
+      <div class="subtitle">
+        Траектория<br>
+        поколений
+      </div>
+
+    </div>
+
+
+    <div class="red-dot"></div>
+
+
+    <a
+      href="#book"
+      class="open-book"
+    >
+      Открыть книгу ↓
+    </a>
+
+  </section>
+
+
+  <!-- =========================
+       СОДЕРЖАНИЕ КНИГИ
+  ========================== -->
+
+  <section
+    class="book"
+    id="book"
+  >
+
+    <div class="book-heading">
+
+      <div class="book-number">
+        80
+      </div>
+
+      <h1>
+        История<br>
+        поколений
+      </h1>
+
+    </div>
+
+
+    <div class="chapters">
+
+      <article class="chapter">
+
+        <small>ГЛАВА 01</small>
+
+        <div>
+
+          <h2>
+            Начало истории
+          </h2>
+
+          <p>
+            История университета,
+            первые годы,
+            люди и события,
+            с которых всё начиналось.
+          </p>
+
+        </div>
+
+      </article>
+
+
+      <article class="chapter">
+
+        <small>ГЛАВА 02</small>
+
+        <div>
+
+          <h2>
+            Люди
+          </h2>
+
+          <p>
+            Преподаватели,
+            выпускники и студенты,
+            формировавшие университет.
+          </p>
+
+        </div>
+
+      </article>
+
+
+      <article class="chapter">
+
+        <small>ГЛАВА 03</small>
+
+        <div>
+
+          <h2>
+            Технологии
+          </h2>
+
+          <p>
+            Развитие науки,
+            инженерии и новых
+            образовательных направлений.
+          </p>
+
+        </div>
+
+      </article>
+
+
+      <article class="chapter">
+
+        <small>ГЛАВА 04</small>
+
+        <div>
+
+          <h2>
+            Будущее
+          </h2>
+
+          <p>
+            Новый этап истории
+            и траектория следующих
+            поколений.
+          </p>
+
+        </div>
+
+      </article>
+
+    </div>
+
+  </section>
+
+
+  <script>
+
+    /*
+      Дополнительная интерактивная
+      анимация цифры 80.
+
+      Число слегка поворачивается
+      вслед за мышкой.
+    */
+
+    const number80 =
+      document.getElementById("number80");
+
+    document.addEventListener(
+      "mousemove",
+      (event) => {
+
+        const x =
+          (event.clientX / window.innerWidth - 0.5);
+
+        const y =
+          (event.clientY / window.innerHeight - 0.5);
+
+        number80.style.transform =
+          `
+          perspective(700px)
+          rotateY(${x * 14}deg)
+          rotateX(${-y * 10}deg)
+          `;
+
+      }
+    );
+
+
+    document.addEventListener(
+      "mouseleave",
+      () => {
+
+        number80.style.transform =
+          `
+          perspective(700px)
+          rotateX(0deg)
+          rotateY(0deg)
+          `;
+
+      }
+    );
+
+  </script>
+
+</body>
+</html>
