@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Московский Политех</title>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; min-height: 100%; background: #000; }
+  body { overflow-x: hidden; }
+
+  .scroll-scene {
+    height: 340vh;
+    position: relative;
+    background: #000;
+  }
+
+  .sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background: #000;
+  }
+
+  #stage {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .hint {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    color: rgba(255,255,255,.45);
+    font: 11px/1 Arial, sans-serif;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity .25s ease;
+  }
+
+  .after {
+    height: 35vh;
+    background: #000;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-scene { height: 200vh; }
+  }
+</style>
+</head>
+
+<body>
+
+<section class="scroll-scene" id="scrollScene">
+  <div class="sticky">
+    <canvas id="stage"></canvas>
+    <div class="hint" id="hint">scroll</div>
+  </div>
+</section>
+
+<div class="after"></div>
+
+<script>
+(() => {
+  const scene = document.getElementById('scrollScene');
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const hint = document.getElementById('hint');
+
+  const img1 = new Image();
+  const img2 = new Image();
+  img1.src = 'scene-1.png';
+  img2.src = 'scene-2.png';
+
+  let ready = false;
+  let dpr = 1;
+  let vw = 0;
+  let vh = 0;
+
+  // Исходные точки из правого нижнего паттерна первой картинки.
+  let sourceSamples = [];
+  // Целевые точки из реальной S-образной ленты второй картинки.
+  let targetSamples = [];
+  let particles = [];
+
+  const PARTICLE_COUNT = 1800;
+
+  // Детерминированный random, чтобы анимация всегда выглядела одинаково.
+  let seed = 872341;
+  function rand() {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  }
+
+  const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  function smooth(t) {
+    t = clamp(t);
+    return t * t * (3 - 2 * t);
+  }
+
+  function smoother(t) {
+    t = clamp(t);
+    return t * t * t * (t * (t * 6 - 15) + 10);
+  }
+
+  function range(v, a, b) {
+    return clamp((v - a) / (b - a));
+  }
+
+  function containRect(iw, ih, cw, ch) {
+    const s = Math.min(cw / iw, ch / ih);
+    const w = iw * s;
+    const h = ih * s;
+    return {
+      x: (cw - w) * .5,
+      y: (ch - h) * .5,
+      w, h, s
+    };
+  }
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    vw = window.innerWidth;
+    vh = window.innerHeight;
+
+    canvas.width = Math.floor(vw * dpr);
+    canvas.height = Math.floor(vh * dpr);
+    canvas.style.width = vw + 'px';
+    canvas.style.height = vh + 'px';
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (ready) buildParticles();
+    render();
+  }
+
+  // Снимаем пиксельные образцы из референсов.
+  function extractSamples() {
+    sourceSamples = extractSource(img1);
+    targetSamples = extractTarget(img2);
+
+    // если браузер вдруг дал слишком мало точек — fallback
+    if (sourceSamples.length < 300 || targetSamples.length < 300) {
+      console.warn('Мало точек маски:', sourceSamples.length, targetSamples.length);
+    }
+  }
+
+  function extractSource(img) {
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    const x = c.getContext('2d', { willReadFrequently: true });
+    x.drawImage(img, 0, 0);
+
+    const data = x.getImageData(0, 0, c.width, c.height).data;
+    const pts = [];
+
+    // Берем только область кругового паттерна справа снизу,
+    // чтобы не захватить диагональные линии и логотип.
+    const x0 = Math.floor(c.width * .55);
+    const y0 = Math.floor(c.height * .53);
+
+    for (let yy = y0; yy < c.height; yy += 3) {
+      for (let xx = x0; xx < c.width; xx += 3) {
+        const k = (yy * c.width + xx) * 4;
+        const r = data[k];
+        const g = data[k + 1];
+        const b = data[k + 2];
+
+        const brightness = (r + g + b) / 3;
+        const redish = r > 135 && r > g * 1.08;
+        const whiteish = brightness > 175;
+
+        // Игнорируем почти черный фон.
+        if (whiteish || redish) {
+          pts.push({
+            x: xx,
+            y: yy,
+            r, g, b
+          });
+        }
+      }
+    }
+    return pts;
+  }
+
+  function extractTarget(img) {
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    const x = c.getContext('2d', { willReadFrequently: true });
+    x.drawImage(img, 0, 0);
+
+    const data = x.getImageData(0, 0, c.width, c.height).data;
+    const pts = [];
+
+    for (let yy = 0; yy < c.height; yy += 3) {
+      for (let xx = 0; xx < c.width; xx += 3) {
+        // Исключаем текст "МОСКОВСКИЙ ПОЛИТЕХ / в лицах"
+        const inRightTitle =
+          xx > c.width * .72 &&
+          xx < c.width * .99 &&
+          yy > c.height * .25 &&
+          yy < c.height * .58;
+
+        // Исключаем маленький знак "80 / 2027" слева.
+        const inLeftLogo =
+          xx > c.width * .14 &&
+          xx < c.width * .34 &&
+          yy > c.height * .38 &&
+          yy < c.height * .70;
+
+        // Исключаем красную точку снизу — она остается частью фонового референса.
+        const inRedDot =
+          xx > c.width * .56 &&
+          xx < c.width * .64 &&
+          yy > c.height * .84;
+
+        if (inRightTitle || inLeftLogo || inRedDot) continue;
+
+        const k = (yy * c.width + xx) * 4;
+        const r = data[k];
+        const g = data[k + 1];
+        const b = data[k + 2];
+        const brightness = (r + g + b) / 3;
+
+        // Серая/белая лента на черном фоне.
+        // Берем нейтральные светлые пиксели.
+        const neutral = Math.max(r,g,b) - Math.min(r,g,b) < 34;
+
+        if (brightness > 70 && neutral) {
+          pts.push({
+            x: xx,
+            y: yy,
+            r, g, b
+          });
+        }
+      }
+    }
+    return pts;
+  }
+
+  function chooseSamples(arr, n) {
+    if (!arr.length) return [];
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      // равномерная выборка с небольшим детерминированным разбросом
+      const t = (i + rand() * .85) / n;
+      const idx = Math.min(arr.length - 1, Math.floor(t * arr.length));
+      out.push(arr[idx]);
+    }
+    return out;
+  }
+
+  function buildParticles() {
+    if (!ready || !sourceSamples.length || !targetSamples.length) return;
+
+    seed = 872341;
+
+    const src = chooseSamples(sourceSamples, PARTICLE_COUNT);
+    const dst = chooseSamples(targetSamples, PARTICLE_COUNT);
+
+    const r1 = containRect(img1.naturalWidth, img1.naturalHeight, vw, vh);
+    const r2 = containRect(img2.naturalWidth, img2.naturalHeight, vw, vh);
+
+    // Сортировка помогает не делать слишком хаотичные пересечения:
+    // исходные точки — по углу вокруг центра паттерна,
+    // целевые — сначала сверху вниз, затем слева направо.
+    const sCx = img1.naturalWidth * .82;
+    const sCy = img1.naturalHeight * .78;
+
+    src.sort((a,b) => {
+      const aa = Math.atan2(a.y-sCy, a.x-sCx);
+      const bb = Math.atan2(b.y-sCy, b.x-sCx);
+      if (Math.abs(aa-bb) > .02) return aa-bb;
+      return Math.hypot(a.x-sCx,a.y-sCy) - Math.hypot(b.x-sCx,b.y-sCy);
+    });
+
+    dst.sort((a,b) => {
+      if (Math.abs(a.y-b.y) > 5) return a.y-b.y;
+      return a.x-b.x;
+    });
+
+    particles = src.map((s, i) => {
+      const t = dst[i % dst.length];
+
+      return {
+        sx: r1.x + s.x * r1.s,
+        sy: r1.y + s.y * r1.s,
+
+        tx: r2.x + t.x * r2.s,
+        ty: r2.y + t.y * r2.s,
+
+        sr: s.r, sg: s.g, sb: s.b,
+        tr: t.r, tg: t.g, tb: t.b,
+
+        // Чтобы точки не начинали все одновременно.
+        delay: rand() * .18,
+
+        // Размер точки зависит от масштаба макета.
+        sizeA: lerp(1.8, 4.7, rand()) * Math.max(.7, r1.s),
+        sizeB: lerp(.75, 1.8, rand()) * Math.max(.7, r2.s)
+      };
+    });
+  }
+
+  function drawContained(img, alpha) {
+    if (alpha <= 0) return;
+    const r = containRect(img.naturalWidth, img.naturalHeight, vw, vh);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(img, r.x, r.y, r.w, r.h);
+    ctx.restore();
+  }
+
+  function drawParticles(p) {
+    // Морф начинается после небольшой паузы.
+    const m0 = range(p, .16, .78);
+
+    // На самом старте точки почти точно лежат поверх паттерна референса.
+    // В конце они сходятся к реальному S-паттерну второй картинки.
+    for (let i = 0; i < particles.length; i++) {
+      const q = particles[i];
+      const local = smoother(clamp((m0 - q.delay) / (1 - q.delay)));
+
+      // "Падение": в середине добавляем небольшой вертикальный провис.
+      const arc = Math.sin(local * Math.PI);
+      const fall = arc * (28 + (i % 17));
+
+      const x = lerp(q.sx, q.tx, local);
+      const y = lerp(q.sy, q.ty, local) + fall;
+
+      const rr = Math.round(lerp(q.sr, q.tr, local));
+      const gg = Math.round(lerp(q.sg, q.tg, local));
+      const bb = Math.round(lerp(q.sb, q.tb, local));
+      const size = lerp(q.sizeA, q.sizeB, local);
+
+      // Паттерн слегка "рассыпается" в середине.
+      const alpha = 0.82 + 0.18 * Math.cos(local * Math.PI * 2);
+
+      ctx.beginPath();
+      ctx.arc(x, y, Math.max(.6, size), 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${rr},${gg},${bb},${alpha})`;
+      ctx.fill();
+    }
+  }
+
+  function getProgress() {
+    const rect = scene.getBoundingClientRect();
+    const max = scene.offsetHeight - window.innerHeight;
+    if (max <= 0) return 0;
+    return clamp(-rect.top / max);
+  }
+
+  function render() {
+    if (!ready) return;
+
+    const p = getProgress();
+
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, vw, vh);
+
+    /*
+      0.00–0.18: первая картинка 1:1.
+      0.18–0.64: первая уходит, идет particle morph.
+      0.58–1.00: проявляется вторая картинка 1:1.
+    */
+    const fade1 = 1 - smooth(range(p, .20, .58));
+    const fade2 = smooth(range(p, .56, .88));
+
+    drawContained(img1, fade1);
+
+    // Во время перехода затемняем фон, чтобы частицы были хорошо видны.
+    if (p > .14 && p < .90) {
+      const dark = Math.sin(range(p, .14, .90) * Math.PI) * .38;
+      ctx.fillStyle = `rgba(0,0,0,${dark})`;
+      ctx.fillRect(0, 0, vw, vh);
+    }
+
+    if (p > .11 && p < .91) {
+      drawParticles(p);
+    }
+
+    drawContained(img2, fade2);
+
+    ctx.restore();
+
+    hint.style.opacity = String(1 - range(p, .02, .12));
+  }
+
+  function tick() {
+    render();
+    requestAnimationFrame(tick);
+  }
+
+  Promise.all([
+    new Promise(res => { img1.onload = res; }),
+    new Promise(res => { img2.onload = res; })
+  ]).then(() => {
+    extractSamples();
+    ready = true;
+    resize();
+    buildParticles();
+    tick();
+  });
+
+  window.addEventListener('resize', resize);
+})();
+</script>
+
+</body>
+</html>
