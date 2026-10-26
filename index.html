@@ -47,13 +47,235 @@
     transition: opacity .25s ease;
   }
 
-  .after {
-    height: 35vh;
-    background: #000;
+  /* =========================
+     ИНТЕРАКТИВНОЕ МЕНЮ ПОСЛЕ 2 СЦЕН
+  ========================== */
+  .menu-screen {
+    min-height: 100vh;
+    width: 100%;
+    position: relative;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 75% 30%, rgba(236, 67, 88, .11), transparent 25%),
+      radial-gradient(circle at 18% 78%, rgba(126, 89, 255, .10), transparent 28%),
+      #000;
+    padding: 80px 6vw;
+  }
+
+  .menu-screen::before,
+  .menu-screen::after {
+    content: "";
+    position: absolute;
+    width: 42vw;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ff315a, #8858ff, transparent);
+    opacity: .7;
+    transform: rotate(45deg);
+    pointer-events: none;
+  }
+
+  .menu-screen::before {
+    right: -12vw;
+    top: 12vh;
+  }
+
+  .menu-screen::after {
+    left: -14vw;
+    bottom: 12vh;
+  }
+
+  .menu-wrap {
+    width: min(1120px, 100%);
+    position: relative;
+    z-index: 2;
+  }
+
+  .menu-kicker {
+    color: #ef465b;
+    font: 600 12px/1 Arial, sans-serif;
+    letter-spacing: .38em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+
+  .menu-title {
+    color: #fff;
+    font: 800 clamp(42px, 7vw, 100px)/.92 Arial, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: -.04em;
+    max-width: 900px;
+  }
+
+  .menu-subtitle {
+    margin-top: 24px;
+    color: rgba(255,255,255,.56);
+    font: 400 15px/1.6 Arial, sans-serif;
+    letter-spacing: .08em;
+    max-width: 620px;
+  }
+
+  .menu-grid {
+    margin-top: 58px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid rgba(255,255,255,.18);
+    border-left: 1px solid rgba(255,255,255,.18);
+  }
+
+  .menu-btn {
+    min-height: 150px;
+    position: relative;
+    border: 0;
+    border-right: 1px solid rgba(255,255,255,.18);
+    border-bottom: 1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.012);
+    color: #fff;
+    text-align: left;
+    padding: 28px 32px;
+    cursor: pointer;
+    overflow: hidden;
+    transition:
+      background .3s ease,
+      transform .3s ease,
+      color .3s ease;
+  }
+
+  .menu-btn::before {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 4px;
+    background: linear-gradient(90deg, #ff315a, #8a58ff);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .35s cubic-bezier(.2,.8,.2,1);
+  }
+
+  .menu-btn::after {
+    content: "↗";
+    position: absolute;
+    top: 25px;
+    right: 30px;
+    font-size: 27px;
+    color: rgba(255,255,255,.45);
+    transition: transform .3s ease, color .3s ease;
+  }
+
+  .menu-btn:hover,
+  .menu-btn:focus-visible {
+    background: rgba(255,255,255,.065);
+    outline: none;
+  }
+
+  .menu-btn:hover::before,
+  .menu-btn:focus-visible::before {
+    transform: scaleX(1);
+  }
+
+  .menu-btn:hover::after,
+  .menu-btn:focus-visible::after {
+    transform: translate(5px,-5px);
+    color: #ff5369;
+  }
+
+  .menu-index {
+    display: block;
+    color: #ef465b;
+    font: 700 11px/1 Arial, sans-serif;
+    letter-spacing: .25em;
+    margin-bottom: 24px;
+  }
+
+  .menu-label {
+    display: block;
+    font: 700 clamp(24px, 2.8vw, 42px)/1 Arial, sans-serif;
+    text-transform: uppercase;
+  }
+
+  /* Модальное окно при клике на кнопку */
+  .book-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(0,0,0,.86);
+    backdrop-filter: blur(14px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .28s ease;
+  }
+
+  .book-modal.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .book-modal-card {
+    width: min(760px, 100%);
+    border: 1px solid rgba(255,255,255,.2);
+    background: #080808;
+    padding: clamp(28px, 5vw, 58px);
+    position: relative;
+    transform: translateY(18px) scale(.985);
+    transition: transform .28s ease;
+  }
+
+  .book-modal.open .book-modal-card {
+    transform: translateY(0) scale(1);
+  }
+
+  .modal-close {
+    position: absolute;
+    right: 20px;
+    top: 16px;
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 50%;
+    background: transparent;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    transition: background .2s ease, transform .2s ease;
+  }
+
+  .modal-close:hover {
+    background: #ef465b;
+    transform: rotate(90deg);
+  }
+
+  .modal-number {
+    color: #ef465b;
+    font: 700 12px/1 Arial, sans-serif;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+  }
+
+  .modal-title {
+    margin-top: 22px;
+    font: 800 clamp(38px, 6vw, 70px)/.95 Arial, sans-serif;
+    text-transform: uppercase;
+  }
+
+  .modal-copy {
+    margin-top: 26px;
+    max-width: 600px;
+    color: rgba(255,255,255,.66);
+    font: 400 16px/1.7 Arial, sans-serif;
+  }
+
+  @media (max-width: 720px) {
+    .menu-grid { grid-template-columns: 1fr; }
+    .menu-btn { min-height: 125px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .scroll-scene { height: 200vh; }
+    *, *::before, *::after { scroll-behavior: auto !important; }
   }
 </style>
 </head>
@@ -67,7 +289,47 @@
   </div>
 </section>
 
-<div class="after"></div>
+<section class="menu-screen" id="bookMenu">
+  <div class="menu-wrap">
+    <div class="menu-kicker">Электронная книга · 80 лет</div>
+    <h2 class="menu-title">Траектория поколений</h2>
+    <p class="menu-subtitle">
+      Выберите раздел. Названия и содержимое кнопок можно легко заменить
+      на реальные главы электронной книги.
+    </p>
+
+    <div class="menu-grid">
+      <button class="menu-btn" data-index="01" data-title="История" data-copy="Хронология становления Московского Политеха, ключевые даты и этапы развития университета.">
+        <span class="menu-index">01</span>
+        <span class="menu-label">История</span>
+      </button>
+
+      <button class="menu-btn" data-index="02" data-title="Люди" data-copy="Преподаватели, выпускники, студенты и герои, которые создавали историю университета.">
+        <span class="menu-index">02</span>
+        <span class="menu-label">Люди</span>
+      </button>
+
+      <button class="menu-btn" data-index="03" data-title="Хронология" data-copy="Интерактивная временная шкала событий — от основания до юбилейного 2027 года.">
+        <span class="menu-index">03</span>
+        <span class="menu-label">Хронология</span>
+      </button>
+
+      <button class="menu-btn" data-index="04" data-title="Галерея" data-copy="Фотографии, архивные материалы и визуальная история поколений Московского Политеха.">
+        <span class="menu-index">04</span>
+        <span class="menu-label">Галерея</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<div class="book-modal" id="bookModal" aria-hidden="true">
+  <div class="book-modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalClose" aria-label="Закрыть">×</button>
+    <div class="modal-number" id="modalNumber">01</div>
+    <h3 class="modal-title" id="modalTitle">История</h3>
+    <p class="modal-copy" id="modalCopy"></p>
+  </div>
+</div>
 
 <script>
 (() => {
@@ -118,14 +380,20 @@
     return clamp((v - a) / (b - a));
   }
 
-  function containRect(iw, ih, cw, ch) {
-    const s = Math.min(cw / iw, ch / ih);
-    const w = iw * s;
-    const h = ih * s;
+  /*
+    FULLSCREEN mapping:
+    референс занимает РОВНО весь монитор.
+    Ничего не обрезается и не остаются черные поля.
+    Масштаб X/Y независимый, поэтому вся композиция всегда видна.
+  */
+  function fullscreenRect(iw, ih, cw, ch) {
     return {
-      x: (cw - w) * .5,
-      y: (ch - h) * .5,
-      w, h, s
+      x: 0,
+      y: 0,
+      w: cw,
+      h: ch,
+      sx: cw / iw,
+      sy: ch / ih
     };
   }
 
@@ -271,8 +539,8 @@
     const src = chooseSamples(sourceSamples, PARTICLE_COUNT);
     const dst = chooseSamples(targetSamples, PARTICLE_COUNT);
 
-    const r1 = containRect(img1.naturalWidth, img1.naturalHeight, vw, vh);
-    const r2 = containRect(img2.naturalWidth, img2.naturalHeight, vw, vh);
+    const r1 = fullscreenRect(img1.naturalWidth, img1.naturalHeight, vw, vh);
+    const r2 = fullscreenRect(img2.naturalWidth, img2.naturalHeight, vw, vh);
 
     // Сортировка помогает не делать слишком хаотичные пересечения:
     // исходные точки — по углу вокруг центра паттерна,
@@ -296,11 +564,11 @@
       const t = dst[i % dst.length];
 
       return {
-        sx: r1.x + s.x * r1.s,
-        sy: r1.y + s.y * r1.s,
+        sx: r1.x + s.x * r1.sx,
+        sy: r1.y + s.y * r1.sy,
 
-        tx: r2.x + t.x * r2.s,
-        ty: r2.y + t.y * r2.s,
+        tx: r2.x + t.x * r2.sx,
+        ty: r2.y + t.y * r2.sy,
 
         sr: s.r, sg: s.g, sb: s.b,
         tr: t.r, tg: t.g, tb: t.b,
@@ -309,19 +577,17 @@
         delay: rand() * .18,
 
         // Размер точки зависит от масштаба макета.
-        sizeA: lerp(1.8, 4.7, rand()) * Math.max(.7, r1.s),
-        sizeB: lerp(.75, 1.8, rand()) * Math.max(.7, r2.s)
+        sizeA: lerp(1.8, 4.7, rand()) * Math.max(.7, Math.sqrt(r1.sx * r1.sy)),
+        sizeB: lerp(.75, 1.8, rand()) * Math.max(.7, Math.sqrt(r2.sx * r2.sy))
       };
     });
   }
 
-  function drawContained(img, alpha) {
+  function drawFullscreen(img, alpha) {
     if (alpha <= 0) return;
-    const r = containRect(img.naturalWidth, img.naturalHeight, vw, vh);
-
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.drawImage(img, r.x, r.y, r.w, r.h);
+    ctx.drawImage(img, 0, 0, vw, vh);
     ctx.restore();
   }
 
@@ -382,7 +648,7 @@
     const fade1 = 1 - smooth(range(p, .20, .58));
     const fade2 = smooth(range(p, .56, .88));
 
-    drawContained(img1, fade1);
+    drawFullscreen(img1, fade1);
 
     // Во время перехода затемняем фон, чтобы частицы были хорошо видны.
     if (p > .14 && p < .90) {
@@ -395,7 +661,7 @@
       drawParticles(p);
     }
 
-    drawContained(img2, fade2);
+    drawFullscreen(img2, fade2);
 
     ctx.restore();
 
@@ -419,6 +685,49 @@
   });
 
   window.addEventListener('resize', resize);
+
+
+  // =========================
+  // Интерактивные кнопки книги
+  // =========================
+  const modal = document.getElementById('bookModal');
+  const modalClose = document.getElementById('modalClose');
+  const modalNumber = document.getElementById('modalNumber');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalCopy = document.getElementById('modalCopy');
+
+  function openBookModal(button) {
+    modalNumber.textContent = button.dataset.index || '';
+    modalTitle.textContent = button.dataset.title || '';
+    modalCopy.textContent = button.dataset.copy || '';
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    modalClose.focus();
+  }
+
+  function closeBookModal() {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.menu-btn').forEach(button => {
+    button.addEventListener('click', () => openBookModal(button));
+  });
+
+  modalClose.addEventListener('click', closeBookModal);
+
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) closeBookModal();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modal.classList.contains('open')) {
+      closeBookModal();
+    }
+  });
+
 })();
 </script>
 
