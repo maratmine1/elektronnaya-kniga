@@ -259,6 +259,10 @@
     margin-top: 22px;
     font: 800 clamp(38px, 6vw, 70px)/.95 Arial, sans-serif;
     text-transform: uppercase;
+    color: #f2e9ff;
+    text-shadow:
+      0 0 18px rgba(239, 70, 91, .08),
+      0 0 30px rgba(138, 88, 255, .05);
   }
 
   .modal-copy {
@@ -380,13 +384,21 @@
     return clamp((v - a) / (b - a));
   }
 
-  /*
-    FULLSCREEN mapping:
-    референс занимает РОВНО весь монитор.
-    Ничего не обрезается и не остаются черные поля.
-    Масштаб X/Y независимый, поэтому вся композиция всегда видна.
-  */
-  function fullscreenRect(iw, ih, cw, ch) {
+  // Первая сцена: без растяжения, сохраняем квадратный референс.
+  function sourceRect(iw, ih, cw, ch) {
+    const size = Math.min(cw, ch);
+    const s = size / iw;
+    return {
+      x: (cw - size) / 2,
+      y: (ch - size) / 2,
+      w: size,
+      h: size,
+      s
+    };
+  }
+
+  // Вторая сцена остаётся полноэкранной.
+  function targetRect(iw, ih, cw, ch) {
     return {
       x: 0,
       y: 0,
@@ -539,8 +551,8 @@
     const src = chooseSamples(sourceSamples, PARTICLE_COUNT);
     const dst = chooseSamples(targetSamples, PARTICLE_COUNT);
 
-    const r1 = fullscreenRect(img1.naturalWidth, img1.naturalHeight, vw, vh);
-    const r2 = fullscreenRect(img2.naturalWidth, img2.naturalHeight, vw, vh);
+    const r1 = sourceRect(img1.naturalWidth, img1.naturalHeight, vw, vh);
+    const r2 = targetRect(img2.naturalWidth, img2.naturalHeight, vw, vh);
 
     // Сортировка помогает не делать слишком хаотичные пересечения:
     // исходные точки — по углу вокруг центра паттерна,
@@ -564,8 +576,8 @@
       const t = dst[i % dst.length];
 
       return {
-        sx: r1.x + s.x * r1.sx,
-        sy: r1.y + s.y * r1.sy,
+        sx: r1.x + s.x * r1.s,
+        sy: r1.y + s.y * r1.s,
 
         tx: r2.x + t.x * r2.sx,
         ty: r2.y + t.y * r2.sy,
@@ -577,13 +589,95 @@
         delay: rand() * .18,
 
         // Размер точки зависит от масштаба макета.
-        sizeA: lerp(1.8, 4.7, rand()) * Math.max(.7, Math.sqrt(r1.sx * r1.sy)),
+        sizeA: lerp(1.8, 4.7, rand()) * Math.max(.7, r1.s),
         sizeB: lerp(.75, 1.8, rand()) * Math.max(.7, Math.sqrt(r2.sx * r2.sy))
       };
     });
   }
 
-  function drawFullscreen(img, alpha) {
+  function drawFirstScene(img, alpha) {
+    if (alpha <= 0) return;
+
+    const r = sourceRect(img.naturalWidth, img.naturalHeight, vw, vh);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // Чёрный фон по всему экрану
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, vw, vh);
+
+    // Референс без деформации
+    ctx.drawImage(img, r.x, r.y, r.w, r.h);
+
+    // Вспомогательная функция для фирменных полос
+    function drawStripe(x1, y1, x2, y2, width, colorA, colorB, opacity=1) {
+      const grad = ctx.createLinearGradient(x1, y1, x2, y2);
+      grad.addColorStop(0, colorA);
+      grad.addColorStop(1, colorB);
+
+      ctx.save();
+      ctx.globalAlpha = alpha * opacity;
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // -------- Верхняя правая группа --------
+    const topStartX = r.x + r.w * 0.67;
+    const topStartY = r.y - 5;
+
+    for (let i = 0; i < 6; i++) {
+      drawStripe(
+        topStartX + i * 17,
+        topStartY - 15,
+        vw + 110 + i * 16,
+        130 + i * 28,
+        5,
+        i < 2 ? '#8f5cff' : '#ff315e',
+        i < 2 ? '#ff315e' : '#8f5cff',
+        0.93
+      );
+    }
+
+    // отдельная тонкая красная линия справа
+    drawStripe(
+      r.x + r.w * 0.76,
+      r.y + r.h * 0.31,
+      Math.min(vw - 25, r.x + r.w + 165),
+      r.y + r.h * 0.51,
+      3,
+      '#ff315e',
+      '#ff315e',
+      0.95
+    );
+
+    // -------- Нижняя левая группа --------
+    const bottomStartX = r.x + r.w * 0.25;
+    const bottomStartY = r.y + r.h * 0.76;
+
+    for (let i = 0; i < 6; i++) {
+      drawStripe(
+        bottomStartX - i * 17,
+        bottomStartY + i * 23,
+        -120 + i * 20,
+        vh + 120,
+        5,
+        '#8f5cff',
+        '#ff315e',
+        0.93
+      );
+    }
+
+    ctx.restore();
+  }
+
+  function drawSecondScene(img, alpha) {
     if (alpha <= 0) return;
     ctx.save();
     ctx.globalAlpha = alpha;
@@ -648,7 +742,7 @@
     const fade1 = 1 - smooth(range(p, .20, .58));
     const fade2 = smooth(range(p, .56, .88));
 
-    drawFullscreen(img1, fade1);
+    drawFirstScene(img1, fade1);
 
     // Во время перехода затемняем фон, чтобы частицы были хорошо видны.
     if (p > .14 && p < .90) {
@@ -661,7 +755,7 @@
       drawParticles(p);
     }
 
-    drawFullscreen(img2, fade2);
+    drawSecondScene(img2, fade2);
 
     ctx.restore();
 
